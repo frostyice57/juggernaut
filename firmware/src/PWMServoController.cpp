@@ -87,13 +87,21 @@ void PWMServoController::handleCommand(const String &cmd, SerialHandler *serial)
     // Single servo move: S<idx>:<deg>
     if (cmd.startsWith("S") && cmd.indexOf(':') > 0) {
         int colon = cmd.indexOf(':');
+        int semi = cmd.indexOf(';');
         int idx = cmd.substring(1, colon).toInt();
-        int deg = cmd.substring(colon + 1).toInt();
+        int deg = cmd.substring(colon + 1, semi < 0 ? cmd.length() : semi).toInt();
+        unsigned long duration = 0;
         // compute duration from speed
         if (idx >= 0 && idx < _numServos) {
             float start = _angles[idx];
             int angular = abs(deg - (int)start);
-            unsigned long duration = (unsigned long)(angular * (10 - _speed));
+            if (semi < 0) {
+                duration = (unsigned long)(angular * (10 - _speed));
+                if (serial) serial->sendResponse(String("Duration") + String(duration)); //!Delete
+            } else {
+                duration = cmd.substring(semi + 1).toInt() * (1.0 + (2.0 * (10.0 - _speed)) / 10.0);  // scale by speed
+                if (serial) serial->sendResponse(String("Duration") + String(duration)); //!Delete
+            }
             if (moveServoTo((uint8_t)idx, (uint8_t)deg, duration, _defaultEasing)) {
                 if (serial) serial->sendResponse(cmd);
             } else {

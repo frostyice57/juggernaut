@@ -14,6 +14,7 @@ Defaults inspired by typical servo_controller.py settings:
 - 8N1, timeout 1s
 """
 
+
 def send_lines(port, baud, filepath, interval, loop):
     ser = serial.Serial(
         port=port,
@@ -31,6 +32,7 @@ def send_lines(port, baud, filepath, interval, loop):
             return
         idx = 0
         loop_idx = 0
+        speed = 9
         while not loop_idx:
             line = lines[idx]
             # Ensure a terminating newline so receiver sees a full line
@@ -40,6 +42,10 @@ def send_lines(port, baud, filepath, interval, loop):
             # resp = ser.readline()
             # if resp:
             #     print("RX:", resp.decode(errors="replace").rstrip())
+
+            if line.startswith("V"):
+                speed = int(line[1:].strip())
+
             print(f"TX -> {line}")
             idx += 1
             if idx >= len(lines):
@@ -51,14 +57,25 @@ def send_lines(port, baud, filepath, interval, loop):
             time.sleep(interval)
         while True:
             line = lines[idx]
-            # Ensure a terminating newline so receiver sees a full line
-            data = (line + "\n").encode("utf-8")
-            ser.write(data)
+            print(f"TX -> {line}")
+
+            if line.startswith("W"):
+                wait_ms = int(line[1:].strip()) * (1 + (2 / 10 * (10 - speed)))
+                tik = time.perf_counter()
+                print(f"Waiting {wait_ms} ms")
+                time.sleep(wait_ms / 1000)
+                tok = time.perf_counter()
+                print(f"Actual wait time: {(tok - tik) * 1000:.2f} ms")
+            else:
+                # Ensure a terminating newline so receiver sees a full line
+                data = (line + "\n").encode("utf-8")
+                ser.write(data)
+
             # Optional: wait for any echoed response (non-blocking due to timeout)
             # resp = ser.readline()
             # if resp:
             #     print("RX:", resp.decode(errors="replace").rstrip())
-            print(f"TX -> {line}")
+
             idx += 1
             if idx >= len(lines):
                 if loop:
@@ -69,12 +86,13 @@ def send_lines(port, baud, filepath, interval, loop):
     finally:
         ser.close()
 
+
 def main():
     p = argparse.ArgumentParser(description="Send lines from a file periodically over serial.")
     p.add_argument("--file", default="commands.txt", help="Path to text file with one command per line.")
     p.add_argument("--port", default="COM3", help="Serial port (e.g. COM3 or /dev/ttyACM0).")
     p.add_argument("--baud", type=int, default=115200, help="Baud rate (default 115200).")
-    p.add_argument("--interval", type=float, default=0.01, help="Seconds between lines (default 0.2).")
+    p.add_argument("--interval", type=float, default=0.00, help="Seconds between lines (default 0.2).")
     p.add_argument("--loop", default="True", action="store_true", help="Loop file indefinitely.")
     args = p.parse_args()
 
@@ -85,6 +103,7 @@ def main():
     except Exception as e:
         print("Error:", e, file=sys.stderr)
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
