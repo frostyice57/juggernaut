@@ -1,0 +1,61 @@
+# OS / Editor junk
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.venv/
+env/
+venv/
+.Python
+.ipynb_checkpoints/
+
+# C++ / Firmware build artifacts
+*.o
+*.obj
+*.elf
+*.bin
+*.hex
+*.map
+*.d
+/build/
+/dist/
+.pio/
+*.ino.*
+*.cpp.*
+
+# Logs / Runtime data
+*.log
+logs/
+tests/logs/
+
+# CAD files (exports)
+cad/stl/
+cad/step/
+cad/renders/
+!cad/fusion/
+!cad/fusion/**
+
+# Simulation outputs
+*.world
+*.sdf
+*.urdf~
+*.dae
+*.msh
+*.csv
+*.mat
+
+# Misc Tools
+*.lock
+*.cache
+*.tar
+*.zip
+*.7z
