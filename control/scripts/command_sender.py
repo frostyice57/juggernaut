@@ -33,28 +33,6 @@ def send_lines(port, baud, filepath, interval, loop):
         idx = 0
         loop_idx = 0
         speed = 9
-        while not loop_idx:
-            line = lines[idx]
-            # Ensure a terminating newline so receiver sees a full line
-            data = (line + "\n").encode("utf-8")
-            ser.write(data)
-            # Optional: wait for any echoed response (non-blocking due to timeout)
-            # resp = ser.readline()
-            # if resp:
-            #     print("RX:", resp.decode(errors="replace").rstrip())
-
-            if line.startswith("V"):
-                speed = int(line[1:].strip())
-
-            print(f"TX -> {line}")
-            idx += 1
-            if idx >= len(lines):
-                break
-            if line.strip() == "----------":
-                print("Starting main loop...")
-                loop_idx = idx
-                break
-            time.sleep(interval)
         while True:
             line = lines[idx]
             print(f"TX -> {line}")
@@ -71,10 +49,9 @@ def send_lines(port, baud, filepath, interval, loop):
                 data = (line + "\n").encode("utf-8")
                 ser.write(data)
 
-            # Optional: wait for any echoed response (non-blocking due to timeout)
-            # resp = ser.readline()
-            # if resp:
-            #     print("RX:", resp.decode(errors="replace").rstrip())
+
+            if line.startswith("V"):
+                speed = int(line[1:].strip())
 
             idx += 1
             if idx >= len(lines):
@@ -82,6 +59,9 @@ def send_lines(port, baud, filepath, interval, loop):
                     idx = loop_idx
                 else:
                     break
+
+            if line.strip() == "----------":
+                loop_idx = idx
             time.sleep(interval)
     finally:
         ser.close()
@@ -92,7 +72,7 @@ def main():
     p.add_argument("--file", default="commands.txt", help="Path to text file with one command per line.")
     p.add_argument("--port", default="COM3", help="Serial port (e.g. COM3 or /dev/ttyACM0).")
     p.add_argument("--baud", type=int, default=115200, help="Baud rate (default 115200).")
-    p.add_argument("--interval", type=float, default=0.00, help="Seconds between lines (default 0.2).")
+    p.add_argument("--interval", type=float, default=0.0015, help="Seconds between lines (default 0.2).")
     p.add_argument("--loop", default="True", action="store_true", help="Loop file indefinitely.")
     args = p.parse_args()
 

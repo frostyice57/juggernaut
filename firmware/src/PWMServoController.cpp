@@ -28,7 +28,7 @@ void PWMServoController::begin() {
     // initialize outputs to center
     for (uint8_t i = 0; i < _numServos; ++i) {
         int pulse = pulseFromAngle(_angles[i]);
-        _pwm.setPWM(i, 0, pulse);
+        _pwm.setPin(i, pulse);
     }
 }
 
@@ -40,7 +40,7 @@ bool PWMServoController::setAngle(uint8_t servoIndex, uint8_t angle) {
     if (servoIndex >= _numServos || angle < ANGLMIN || angle > ANGLMAX) return false;
     _angles[servoIndex] = (float)angle;
     int pulse = pulseFromAngle(_angles[servoIndex]);
-    _pwm.setPWM(servoIndex, 0, pulse);
+    _pwm.setPin(servoIndex, pulse);
     // cancel any running motion
     _motions[servoIndex].moving = false;
     return true;
@@ -51,7 +51,7 @@ bool PWMServoController::setAllAngles(uint8_t angles[]) {
         if (angles[servoIndex] < ANGLMIN || angles[servoIndex] > ANGLMAX) return false;
         _angles[servoIndex] = (float)angles[servoIndex];
         int pulse = pulseFromAngle(_angles[servoIndex]);
-        _pwm.setPWM(servoIndex, 0, pulse);
+        _pwm.setPin(servoIndex, pulse);
         // cancel any running motion
         _motions[servoIndex].moving = false;
     }
@@ -241,6 +241,6 @@ void PWMServoController::update() {
         }
 
         int pulse = pulseFromAngle(_angles[i]);
-        _pwm.setPWM(i, 0, pulse);
+        _pwm.setPin(i, pulse);
     }
 }
