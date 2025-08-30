@@ -38,7 +38,8 @@ def send_lines(port, baud, filepath, interval, loop):
             print(f"TX -> {line}")
 
             if line.startswith("W"):
-                wait_ms = int(line[1:].strip()) * (1 + (2 / 10 * (10 - speed)))
+                # leaves only numbers in the substring, good for additional comments in commands
+                wait_ms = int(''.join(ch for ch in line[1:].strip() if ch.isdigit()) ) * (1 + (2 / 10 * (10 - speed)))
                 tik = time.perf_counter()
                 print(f"Waiting {wait_ms} ms")
                 time.sleep(wait_ms / 1000)
@@ -72,7 +73,7 @@ def main():
     p.add_argument("--file", default="commands.txt", help="Path to text file with one command per line.")
     p.add_argument("--port", default="COM3", help="Serial port (e.g. COM3 or /dev/ttyACM0).")
     p.add_argument("--baud", type=int, default=115200, help="Baud rate (default 115200).")
-    p.add_argument("--interval", type=float, default=0.0015, help="Seconds between lines (default 0.2).")
+    p.add_argument("--interval", type=float, default=0.0, help="Seconds between lines (default 0.2).")
     p.add_argument("--loop", default="True", action="store_true", help="Loop file indefinitely.")
     args = p.parse_args()
 
