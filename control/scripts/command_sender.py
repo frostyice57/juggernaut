@@ -73,8 +73,8 @@ def main():
     p.add_argument("--file", default="commands.txt", help="Path to text file with one command per line.")
     p.add_argument("--port", default="COM3", help="Serial port (e.g. COM3 or /dev/ttyACM0).")
     p.add_argument("--baud", type=int, default=115200, help="Baud rate (default 115200).")
-    p.add_argument("--interval", type=float, default=0.008, help="Seconds between lines (default 0.2).")
-    # good alt intervals: 0.004, 0.006, 0.008
+    p.add_argument("--interval", type=float, default=0.00, help="Seconds between lines (default 0.2).")
+    # good alt intervals: 0.004, 0.006, 0.008 -- for N = 168
     p.add_argument("--loop", default="True", action="store_true", help="Loop file indefinitely.")
     args = p.parse_args()
 
