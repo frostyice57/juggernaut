@@ -27,12 +27,12 @@ class PWMServoController {
     // Call frequently from main loop to advance non-blocking motions
     void update();
 
-    // Low-level control
-    bool setAngle(uint8_t servoIndex, uint8_t angle);
-    bool setAllAngles(uint8_t angles[]);
+    // Low-level control (angles are floats for higher precision)
+    bool setAngle(uint8_t servoIndex, float angle);
+    bool setAllAngles(const float angles[]);
     // Non-blocking moves
-    bool moveServoTo(uint8_t servoIndex, uint8_t angle, unsigned long durationMs = 0, uint8_t easing = 0);
-    void moveAllServosTo(const uint8_t angles[], unsigned long durationMs = 0, uint8_t easing = 0);
+    bool moveServoTo(uint8_t servoIndex, float angle, unsigned long durationMs = 0, uint8_t easing = 0);
+    void moveAllServosTo(const float angles[], unsigned long durationMs = 0, uint8_t easing = 0);
 
     // Optionally handle text commands passed from SerialHandler
     void handleCommand(const String &cmd, SerialHandler *serial = nullptr);

@@ -36,9 +36,9 @@ int PWMServoController::pulseFromAngle(float angle) {
     return SERVOMIN + int(angle * _pwmPerDegree + 0.5f);
 }
 
-bool PWMServoController::setAngle(uint8_t servoIndex, uint8_t angle) {
+bool PWMServoController::setAngle(uint8_t servoIndex, float angle) {
     if (servoIndex >= _numServos || angle < ANGLMIN || angle > ANGLMAX) return false;
-    _angles[servoIndex] = (float)angle;
+    _angles[servoIndex] = angle;
     int pulse = pulseFromAngle(_angles[servoIndex]);
     _pwm.setPin(servoIndex, pulse);
     // cancel any running motion
@@ -46,10 +46,10 @@ bool PWMServoController::setAngle(uint8_t servoIndex, uint8_t angle) {
     return true;
 }
 
-bool PWMServoController::setAllAngles(uint8_t angles[]) {
+bool PWMServoController::setAllAngles(const float angles[]) {
     for (uint8_t servoIndex = 0; servoIndex < _numServos; ++servoIndex) {
         if (angles[servoIndex] < ANGLMIN || angles[servoIndex] > ANGLMAX) return false;
-        _angles[servoIndex] = (float)angles[servoIndex];
+        _angles[servoIndex] = angles[servoIndex];
         int pulse = pulseFromAngle(_angles[servoIndex]);
         _pwm.setPin(servoIndex, pulse);
         // cancel any running motion
@@ -58,7 +58,7 @@ bool PWMServoController::setAllAngles(uint8_t angles[]) {
     return true;
 }
 
-bool PWMServoController::moveServoTo(uint8_t servoIndex, uint8_t angle, unsigned long durationMs, uint8_t easing) {
+bool PWMServoController::moveServoTo(uint8_t servoIndex, float angle, unsigned long durationMs, uint8_t easing) {
     if (servoIndex >= _numServos) return false;
     if (angle < ANGLMIN) angle = ANGLMIN;
     if (angle > ANGLMAX) angle = ANGLMAX;
@@ -73,7 +73,7 @@ bool PWMServoController::moveServoTo(uint8_t servoIndex, uint8_t angle, unsigned
     return true;
 }
 
-void PWMServoController::moveAllServosTo(const uint8_t angles[], unsigned long durationMs, uint8_t easing) {
+void PWMServoController::moveAllServosTo(const float angles[], unsigned long durationMs, uint8_t easing) {
     for (uint8_t i = 0; i < _numServos; ++i) {
         moveServoTo(i, angles[i], durationMs, easing);
     }
@@ -89,20 +89,20 @@ void PWMServoController::handleCommand(const String &cmd, SerialHandler *serial)
         int colon = cmd.indexOf(':');
         int semi = cmd.indexOf(';');
         int idx = cmd.substring(1, colon).toInt();
-        int deg = cmd.substring(colon + 1, semi < 0 ? cmd.length() : semi).toInt();
+        float deg = cmd.substring(colon + 1, semi < 0 ? cmd.length() : semi).toFloat();
         unsigned long duration = 0;
         // compute duration from speed
         if (idx >= 0 && idx < _numServos) {
             float start = _angles[idx];
-            int angular = abs(deg - (int)start);
+            float angular = fabs(deg - start);
             if (semi < 0) {
                 duration = (unsigned long)(angular * (10 - _speed));
-                if (serial) serial->sendResponse(String("Duration") + String(duration)); //!Delete
+                if (serial) serial->sendResponse(String("Duration") + String(duration));  //! Delete
             } else {
-                duration = cmd.substring(semi + 1).toInt() * (1.0 + (2.0 * (10.0 - _speed)) / 10.0);  // scale by speed
-                if (serial) serial->sendResponse(String("Duration") + String(duration)); //!Delete
+                duration = (unsigned long)(cmd.substring(semi + 1).toFloat() * (1.0 + (2.0 * (10.0 - _speed)) / 10.0));  // scale by speed
+                if (serial) serial->sendResponse(String("Duration") + String(duration));                                 //! Delete
             }
-            if (moveServoTo((uint8_t)idx, (uint8_t)deg, duration, _defaultEasing)) {
+            if (moveServoTo((uint8_t)idx, deg, duration, _defaultEasing)) {
                 if (serial) serial->sendResponse(cmd);
             } else {
                 if (serial) serial->sendResponse("Invalid");
@@ -131,9 +131,9 @@ void PWMServoController::handleCommand(const String &cmd, SerialHandler *serial)
     else if (cmd.startsWith("M") && cmd.indexOf(':') > 0) {
         int colon = cmd.indexOf(':');
         String body = cmd.substring(colon + 1);
-        // parse comma-separated angles
-        uint8_t targets[PWMSC_MAX_SERVOS];
-        for (uint8_t i = 0; i < _numServos; ++i) targets[i] = (uint8_t)roundf(_angles[i]);
+        // parse comma-separated angles (use float targets for precision)
+        float targets[PWMSC_MAX_SERVOS];
+        for (uint8_t i = 0; i < _numServos; ++i) targets[i] = _angles[i];
 
         unsigned int idx = 0;
         unsigned int start = 0;
@@ -149,17 +149,17 @@ void PWMServoController::handleCommand(const String &cmd, SerialHandler *serial)
             }
             tok.trim();
             if (tok.length() > 0) {
-                int deg = tok.toInt();
+                float deg = tok.toFloat();
                 if (deg < ANGLMIN) deg = ANGLMIN;
                 if (deg > ANGLMAX) deg = ANGLMAX;
-                targets[idx++] = (uint8_t)deg;
+                targets[idx++] = deg;
             }
         }
 
-        // compute max angular distance
-        int maxDiff = 0;
+        // compute max angular distance (float)
+        float maxDiff = 0.0f;
         for (uint8_t i = 0; i < _numServos; ++i) {
-            int diff = abs((int)targets[i] - (int)roundf(_angles[i]));
+            float diff = fabs(targets[i] - _angles[i]);
             if (diff > maxDiff) maxDiff = diff;
         }
         unsigned long duration = (unsigned long)(maxDiff * (10 - _speed));
